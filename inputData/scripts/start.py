@@ -10,6 +10,7 @@ import sys
 
 from pathlib import Path
 
+# Variables for input and output data
 pathConfig = "/home/config/config.yml"
 pathApicLoginTemplate = "/home/templates/apicLoginTemplate.json"
 pathSubscriptionIds = "/home/internal/subscriptionIds.json"
@@ -17,11 +18,15 @@ basePathLogs = "/home/data/logs/"
 basePathOutput = "/home/data/output/"
 loginToken = ""
 
+# Load config file, it is required in multiple follwing functions
 with open(pathConfig, "r") as handle:
     config = yaml.full_load(handle)
 
+# Disable warning for APIC Self-Signed Certificate
 requests.packages.urllib3.disable_warnings()
 
+# Write Tool logs to local logfile, can be mapped to host volume
+# Messages are provided by the calling functions
 def writeLog(message):
     Path(basePathLogs).mkdir(parents=True, exist_ok=True)
     logPath = basePathLogs + time.strftime('%Y-%m-%d', time.localtime()) + ".txt"
@@ -60,13 +65,21 @@ def apicLogin():
 def subscribe(loginToken):
     subIds = []
 
-    for sub in config['monitored_objects']:
+    if not config['monitored_objects']:
         response = requests.get(
-            "https://" + config['apic_login']['address'] + sub + ".json?subscription=yes&refresh-timeout=600",
+            "https://" + config['apic_login']['address'] + "/api/node/class/faultInst.json?subscription=yes&refresh-timeout=600",
             headers = {'Cookie': "APIC-cookie=" + loginToken},
             verify = False
         )
         subIds.append(json.loads(response.text)['subscriptionId'])
+    else:
+        for sub in config['monitored_objects']:
+            response = requests.get(
+                "https://" + config['apic_login']['address'] + sub + ".json?subscription=yes&refresh-timeout=600",
+                headers = {'Cookie': "APIC-cookie=" + loginToken},
+                verify = False
+            )
+            subIds.append(json.loads(response.text)['subscriptionId'])
 
     message = "Subscription successful. Subscription IDs:\n"
     for subid in subIds:

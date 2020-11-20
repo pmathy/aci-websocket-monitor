@@ -28,17 +28,20 @@ apic_login:
 ##### Monitored MO Settings #####
 # This part of the configuration contains the MOs which are supposed to be 
 # monitored. These are specified by providing their DN. If none are specified,
-# by default faultInst and faultDelegate are monitored.
+# by default faultInst objects are monitored.
 
 ##### THESE SETTINGS SHOULD BE SPECIFIED #####
 
 # Example:
-# monitored_objects:
+# monitored_objects: [
 #   - "/api/node/class/faultInst"
 #   - "/api/node/class/faultDelegate"
+#   - "/api/class/fvTenant"
+# ]
 
-monitored_objects:
+monitored_objects: [
   - "/api/class/fvTenant"
+]
 
 ##### Data Output Settings #####
 # This Configuration part describes what the container does with the data it 
