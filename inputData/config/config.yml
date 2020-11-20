@@ -1,0 +1,73 @@
+###########################################################
+##### ACI Websocket Monitor Container - Configuration #####
+###########################################################
+
+# This config file describes essentially three things:
+#   - The connection between the Websocket and APIC Controller
+#   - Which ACI Objects are meant to be monitored
+#   - How the Websocket Container proceeds with the received information/logs
+
+##### APIC Connection Settings #####
+# required settings: IP Address/FQDN, Username, Password
+# Certificate Based Authentication is not supported for Websocket setup, because
+# no Token is generated that way, and the Token is required for the Websocket.
+
+##### THESE SETTINGS ARE MANDATORY #####
+
+# Example:
+# apic-login:
+#   address: "1.2.3.4"
+#   username: "testuser"
+#   password: "h1ghly-secure-p@ssw0rd"
+
+apic_login:
+  address: "10.49.208.146"
+  username: "pmathy_elk"
+  password: "C!sco123"
+
+##### Monitored MO Settings #####
+# This part of the configuration contains the MOs which are supposed to be 
+# monitored. These are specified by providing their DN. If none are specified,
+# by default faultInst and faultDelegate are monitored.
+
+##### THESE SETTINGS SHOULD BE SPECIFIED #####
+
+# Example:
+# monitored_objects:
+#   - "/api/node/class/faultInst"
+#   - "/api/node/class/faultDelegate"
+
+monitored_objects:
+  - "/api/class/fvTenant"
+
+##### Data Output Settings #####
+# This Configuration part describes what the container does with the data it 
+# receives from APIC according to the subscriptions. The following are currently
+# possible:
+#   - Write to file in data directory (requires mapped volume to access)
+#   - Forward through REST POST call to data collector (e.g. Logstash etc.)
+#
+# If no target is specified, the container defaults to Write to File.
+# If multiple are specified, all will be executed in the following order:
+#   - REST Forwarding
+#   - Write to File
+#
+# Rest Forwarding currently supports Basic Auth with Username/Password.
+# These are optional, if Auth is not required.
+
+##### THESE SETTINGS SHOULD BE SPECIFIED #####
+
+# Example:
+# data_output:
+#   toFile:
+#     baseFilename: "testOutput"
+#   toRest:
+#     ssl: False
+#     destAddress: "1.2.3.4"
+#     destPort: "8000"                             (optional)
+#     username: "testrestuser"                     (optional)
+#     password: "4noth3r-secure-p@ssw0rd"          (optional)
+
+data_output:
+  toFile:
+    baseFilename: "testOutput"

@@ -1,0 +1,8 @@
+{
+    "aaaUser" : {
+        "attributes" : {
+            "name" : "your apic user",
+            "pwd" : "your apic password"
+        }
+    }
+}
