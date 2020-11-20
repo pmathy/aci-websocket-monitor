@@ -1,3 +1,4 @@
+---
 ###########################################################
 ##### ACI Websocket Monitor Container - Configuration #####
 ###########################################################
@@ -33,15 +34,13 @@ apic_login:
 ##### THESE SETTINGS SHOULD BE SPECIFIED #####
 
 # Example:
-# monitored_objects: [
+# monitored_objects:
 #   - "/api/node/class/faultInst"
 #   - "/api/node/class/faultDelegate"
 #   - "/api/class/fvTenant"
-# ]
 
-monitored_objects: [
+monitored_objects:
   - "/api/class/fvTenant"
-]
 
 ##### Data Output Settings #####
 # This Configuration part describes what the container does with the data it 
@@ -74,3 +73,5 @@ monitored_objects: [
 data_output:
   toFile:
     baseFilename: "testOutput"
+
+...
