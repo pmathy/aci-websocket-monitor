@@ -35,7 +35,26 @@ This repository contains a Dockerfile and several other files which are copied i
 the Docker container at Build time. These files contain scripts, requirements, templates
 etc. and can all be inspected and modified if required for your particular setup.
 
-The most important file contained here is the ./inputData/config/config.yml file, 
+### <span style="color:red">DISCLAIMER: What it does not do.</span>
+
+The setup as delivered through this repository does NOT constitute a full monitoring 
+solution, no ELK stack or similar log management and visualization is included.
+
+### <span style="color:green">What it does do.</span>
+
+This tool only subscribes to APIC to get notified when MOs it is subscribed to get modified, 
+and then forwards these logs any Monitoring solution you may have, such as ELK or TIG,
+as long as that solution can receive JSON over HTTP/S. Alternatively or additionally 
+these notifications can be written to file locally. Its purpose is to act as a Websocket
+capable forwarder for APIC, since most monitoring solutions are not equipped by default 
+to handle this subscription mechanism. It can also be used to provide short term intermediate 
+monitoring for specific MOs, for example during a Change Window.
+
+![Figure: ACI Websocket Monitor Connections](https://user-images.githubusercontent.com/68273068/100007789-e09e9680-2dcc-11eb-8b91-22c372be1893.png)
+
+### How it is configured to do that.
+
+The most important file contained in here is the ./inputData/config/config.yml file, 
 which contains the configuration for the container that needs to be done to fit your
 Use Case. This config file describes essentially three things:
 - The connection between the Websocket and APIC Controller
@@ -61,12 +80,12 @@ as a volume, to enable the container to write logs and data to the Host filesyst
 
 ## So how do I do it?
 
-### Update the configuration
+### 1. Update the configuration
 First thing to do is to put your desired configuration parameters into the config.yml
 file that is described above. Each part of the configuration is described within 
 this file.
 
-### Build the image
+### 2. Build the image
 Once the configuration is updated and ready, the container image must be built. 
 It can be built without any parameters, just provide a meaningful name to the image.
 
@@ -106,7 +125,7 @@ Successfully built b962d5c4953e
 Successfully tagged aci_websocket:1.1
 ```
 
-### Run the image
+### 3. Run the image
 As soon as the image is built, the container itself can be run. It can be run without
 any parameters, especially if it is not meant to write its data to local file but 
 forward it to a remote REST endpoint (except perhaps -d to run in background).
@@ -139,4 +158,4 @@ $ docker run -d -v ./outputData:/home/data aci_websocket:1.1
 This will enable you to look at the log files as well as potential output files within
 the mapped directory.
 
-### Profit!
+### <span style="color:green">4. Profit!</span>
