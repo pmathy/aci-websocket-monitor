@@ -40,6 +40,73 @@ def writeLog(message):
     sys.stdout.close()
     sys.stdout = old_stdout
 
+def outputToRest(message):
+    toRest = config['data_output']['toRest']
+
+    # Check for HTTP/HTTPS and optional Destination Port
+    if toRest['ssl'] is True and "destPort" in toRest:
+        url = "https://" + toRest['destAddress'] + ":" + toRest['destPort']
+    elif toRest['ssl'] is True:
+        url = "https://" + toRest['destAddress']
+    if toRest['ssl'] is False and "destPort" in toRest:
+        url = "http://" + toRest['destAddress'] + ":" + toRest['destPort']
+    else:
+        url = "http://" + toRest['destAddress']
+
+    # REST Call with Basic Auth (if configured)
+    if "username" in toRest and "password" in toRest:
+        response = requests.post(
+            url,
+            headers = {'Content-Type': 'application/json'},
+            auth=(toRest['username'], toRest['password']),
+            data = json.dumps(json.JSONDecoder().decode(message))
+        )
+    
+    elif "username" in toRest and not "password" in toRest:
+        log = "You must provide both Username and Password for Authentication! Falling back to No Auth."
+        writeLog(log)
+        return False
+
+    elif not "username" in toRest and "password" in toRest:
+        log = "You must provide both Username and Password for Authentication! Falling back to No Auth."
+        writeLog(log)
+        return False
+
+    # REST Call with No Auth (if none configured)
+    else:
+        response = requests.post(
+            url,
+            headers = {'Content-Type': 'application/json'},
+            data = json.dumps(json.JSONDecoder().decode(message))
+        )
+
+    return True
+
+def outputToFile(message):
+    toFile = config['data_output']['toFile']
+
+    baseList = []
+
+    Path(basePathOutput).mkdir(parents=True, exist_ok=True)
+    outputPath = basePathOutput + toFile['baseFilename'] + "_" + time.strftime('%Y-%m-%d', time.localtime()) + ".json"
+
+    if ospath.exists(outputPath):
+        with open(outputPath, "r") as handle:
+            baseList = json.load(handle)
+
+        baseList.append(json.JSONDecoder().decode(message))
+
+    else:
+        baseList.append(json.JSONDecoder().decode(message))
+
+    old_stdout = sys.stdout
+    sys.stdout = open(outputPath,"w+")
+    print(json.dumps(baseList))
+    sys.stdout.close()
+    sys.stdout = old_stdout
+
+    return True
+
 def apicLogin():
 
     with open(pathApicLoginTemplate, "r") as handle:
@@ -117,64 +184,10 @@ def refresh():
 def on_message(ws, message):
 
     if "toRest" in config['data_output']:
-        toRest = config['data_output']['toRest']
-
-        # Check for HTTP/HTTPS and optional Destination Port
-        if toRest['ssl'] is True and "destPort" in toRest:
-            url = "https://" + toRest['destAddress'] + ":" + toRest['destPort']
-        elif toRest['ssl'] is True:
-            url = "https://" + toRest['destAddress']
-        if toRest['ssl'] is False and "destPort" in toRest:
-            url = "http://" + toRest['destAddress'] + ":" + toRest['destPort']
-        else:
-            url = "http://" + toRest['destAddress']
-
-        # REST Call with Basic Auth (if configured)
-        if "username" in toRest and "password" in toRest:
-            response = requests.post(
-                url,
-                headers = {'Content-Type': 'application/json'},
-                auth=(toRest['username'], toRest['password']),
-                data = json.dumps(json.JSONDecoder().decode(message))
-            )
-        
-        elif "username" in toRest and not "password" in toRest:
-            message = "You must provide both Username and Password for Authentication! Falling back to No Auth."
-            writeLog(message)
-        elif not "username" in toRest and "password" in toRest:
-            message = "You must provide both Username and Password for Authentication! Falling back to No Auth."
-            writeLog(message)
-
-        # REST Call with No Auth (if none configured)
-        else:
-            response = requests.post(
-                url,
-                headers = {'Content-Type': 'application/json'},
-                data = json.dumps(json.JSONDecoder().decode(message))
-            )
+        outputToRest(message)
 
     if "toFile" in config['data_output']:
-        toFile = config['data_output']['toFile']
-
-        baseList = []
-
-        Path(basePathOutput).mkdir(parents=True, exist_ok=True)
-        outputPath = basePathOutput + toFile['baseFilename'] + "_" + time.strftime('%Y-%m-%d', time.localtime()) + ".json"
-
-        if ospath.exists(outputPath):
-            with open(outputPath, "r") as handle:
-                baseList = json.load(handle)
-
-            baseList.append(json.JSONDecoder().decode(message))
-
-        else:
-            baseList.append(json.JSONDecoder().decode(message))
-
-        old_stdout = sys.stdout
-        sys.stdout = open(outputPath,"w+")
-        print(json.dumps(baseList))
-        sys.stdout.close()
-        sys.stdout = old_stdout
+        outputToFile(message)
 
 def on_error(ws, error):
     writeLog(error)
@@ -197,7 +210,7 @@ if __name__ == "__main__":
     ws = websocket.WebSocketApp("wss://" + config['apic_login']['address'] + "/socket" + loginToken,
                                 on_message = on_message,
                                 on_error = on_error,
-                                on_close = on_close)
-    ws.on_open = on_open
+                                on_close = on_close,
+                                on_open = on_open)
 
     ws.run_forever(sslopt={"cert_reqs": ssl.CERT_NONE})
