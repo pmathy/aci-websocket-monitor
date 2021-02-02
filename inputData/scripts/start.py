@@ -9,6 +9,7 @@ import ssl
 import sys
 
 from pathlib import Path
+from os import path as ospath
 
 # Variables for input and output data
 pathConfig = "/home/config/config.yml"
@@ -155,12 +156,23 @@ def on_message(ws, message):
     if "toFile" in config['data_output']:
         toFile = config['data_output']['toFile']
 
+        baseList = []
+
         Path(basePathOutput).mkdir(parents=True, exist_ok=True)
         outputPath = basePathOutput + toFile['baseFilename'] + "_" + time.strftime('%Y-%m-%d', time.localtime()) + ".json"
 
+        if ospath.exists(outputPath):
+            with open(outputPath, "r") as handle:
+                baseList = json.load(handle)
+
+            baseList.append(json.JSONDecoder().decode(message))
+
+        else:
+            baseList.append(json.JSONDecoder().decode(message))
+
         old_stdout = sys.stdout
-        sys.stdout = open(outputPath,"a+")
-        print(json.dumps(json.JSONDecoder().decode(message)))
+        sys.stdout = open(outputPath,"w+")
+        print(json.dumps(baseList))
         sys.stdout.close()
         sys.stdout = old_stdout
 
